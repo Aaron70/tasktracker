@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var DateFormats = []string{ "02/01/2006", "02/01/06", "02-01-2006", "02-01-06", }
+
 func newRootCommand(taskService services.TaskService) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "task",

@@ -30,7 +30,7 @@ func newSwitchTaskCommand(taskService services.TaskService) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().TimeP("date", "d", time.Now(), []string{"02/01/2006"}, "The date when the task was created. Defaults to 'today'.")
+	cmd.Flags().TimeP("date", "d", time.Now(), DateFormats, "The date when the task was created. Defaults to 'today'.")
 
 	return cmd
 }
