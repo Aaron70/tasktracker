@@ -30,9 +30,7 @@ func (r fsTaskRepository) Save(task models.Task) error {
 		return fmt.Errorf("The task %q already exists", task.Id)
 	}
 
-	saveTasks(filepath.Join(r.Path, "tasks.json"), tasks)
-
-	return nil
+	return saveTasks(filepath.Join(r.Path, "tasks.json"), tasks)
 }
 
 func (r fsTaskRepository) Update(id string, task models.Task) error {

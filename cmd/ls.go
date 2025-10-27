@@ -3,6 +3,7 @@ package cmd
 import (
 	"time"
 
+	"github.com/aaron70/task/models"
 	"github.com/aaron70/task/services"
 	"github.com/aaron70/task/tui"
 	"github.com/spf13/cobra"
@@ -28,6 +29,7 @@ func newListTasksCommand(taskServices services.TaskService) *cobra.Command {
 
 			day, err := cmd.Flags().GetTime("date")
 			if err != nil { return err }
+
 			status, err := cmd.Flags().GetStringArray("status")
 			if err != nil { return err }
 			filter := services.FindTasksFilter{
@@ -46,9 +48,8 @@ func newListTasksCommand(taskServices services.TaskService) *cobra.Command {
 	}
 
 	cmd.Flags().BoolP("all", "a", false, "List all tasks without any filter applied.")
-	// BUG: Is not supporting the date, fix it!
-	cmd.Flags().TimeP("date", "d", time.Now(), []string { "02/01/2000" } , "The date to filter the tasks by the StartedAt field.")
-	cmd.Flags().StringArrayP("status", "s", []string{}, "The status to filter the tasks by")
+	cmd.Flags().TimeP("date", "d", time.Now(), []string { "02/01/2006" } , "The date to filter the tasks by the StartedAt field.")
+	cmd.Flags().StringArrayP("status", "s", []string{ string(models.TODO), string(models.IN_PROGRESS) }, "The status to filter the tasks by")
 	// TODO: Add support for filter by tags
 	// cmd.Flags().StringArrayP("tag", "t", []string{}, "The tag to filter the tasks by")
 

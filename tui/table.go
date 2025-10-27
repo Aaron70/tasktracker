@@ -11,9 +11,10 @@ import (
 
 func PrintTable(tasks []models.Task) {
 	columns := []table.Column{
-		{Title: "Name", Width: 25},
+		{Title: "Name", Width: 30},
 		{Title: "Status", Width: 10},
-		{Title: "Duration", Width: 20},
+		{Title: "Duration", Width: 15},
+		{Title: "Created At", Width: 20},
 		{Title: "Started At", Width: 20},
 		{Title: "Finished At", Width: 20},
 		{Title: "Tags", Width: 20},
@@ -32,6 +33,11 @@ func PrintTable(tasks []models.Task) {
 			startedAt = task.StartedAt.Format("02-01-2006 15:04:05")
 		}
 
+		createdAt := "---"
+		if !task.CreatedAt.IsZero() {
+			createdAt = task.CreatedAt.Format("02-01-2006 15:04:05")
+		}
+
 		tags := make([]string, len(task.Tags))
 		for i, tag := range task.Tags {
 			tags[i] = tag.Name
@@ -41,6 +47,7 @@ func PrintTable(tasks []models.Task) {
 			task.Name, 
 			string(task.Status), 
 			task.Duration.String(), 
+			createdAt,
 			startedAt, 
 			finishedAt, 
 			strings.Join(tags, "|"),

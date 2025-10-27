@@ -87,7 +87,7 @@ func (s taskService) Get(name string, date time.Time) (models.Task, error) {
 	task, err := s.repository.Get(models.HashID(name, date))
 	if err != nil {
 		if errors.Is(err, repositories.TaskNotFoundError) {
-			return models.Task{}, fmt.Errorf("%w: Task %q not found", repositories.TaskNotFoundError, name)
+			return models.Task{}, fmt.Errorf("%w: Task %q not found from date %q", repositories.TaskNotFoundError, name, date.Format("02-01-2006"))
 		}
 		return models.Task{}, err
 	}
@@ -150,21 +150,22 @@ func (s taskService) Find(filter FindTasksFilter) ([]models.Task, error) {
 
 	filteredTasks := make([]models.Task, 0, len(allTasks))
 	for _, task := range allTasks {
+		shouldSkip := true
 
 		if !filter.Day.IsZero() {
-			if task.StartedAt.Format("02/01/2006") != filter.Day.Format("02/01/2006") {
-				continue
-			}
+			shouldSkip = task.StartedAt.Format("02/01/2006") != filter.Day.Format("02/01/2006")
 		}
 
 		if len(filter.Status) > 0 {
-			if !slices.Contains(filter.Status, string(task.Status)) {
-				continue
-			}
+			shouldSkip = !slices.Contains(filter.Status, string(task.Status)) && shouldSkip
 		}
 
 		if len(filter.Tags) > 0 {
 			// TODO: Filter tasks by their tags
+		}
+
+		if shouldSkip {
+			continue
 		}
 
 		filteredTasks = append(filteredTasks, task)
