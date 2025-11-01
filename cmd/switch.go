@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/aaron70/task/models"
-	repositories "github.com/aaron70/task/respository"
 	"github.com/aaron70/task/services"
 	"github.com/aaron70/task/tui"
 	"github.com/spf13/cobra"
@@ -35,51 +33,19 @@ func newSwitchTaskCommand(taskService services.TaskService) *cobra.Command {
 	return cmd
 }
 
-func switchTask(taskService services.TaskService, name string, date time.Time) error {
-	current, err := taskService.GetSelectedTask()
+func switchTask(service services.TaskService, name string, date time.Time) error {
+	started, stopped, err := service.Switch(name, date)
 	if err != nil {
 		return err
 	}
 
-	if current.Name != "" {
-		err := taskService.Stop(current.Name, current.CreatedAt)
-		if err != nil {
-			return err
-		}
-	}
+	fmt.Println("Started Task")
+	tui.PrintTable([]models.Task{started})
 
-	if models.HashID(name, date) == models.HashID(current.Name, current.CreatedAt) {
-		fmt.Printf("The task %q is already started.\n", name)
-		return nil
+	if stopped.Id != "" {
+		fmt.Println("Stopped Task")
+		tui.PrintTable([]models.Task{stopped})
 	}
-
-	err = taskService.Start(name, date)
-	if err != nil {
-		return err
-	}
-
-	task, err := taskService.Get(name, date)
-	if err != nil {
-		return err
-	}
-	err = taskService.SelectTask(task)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Task started:")
-	tui.PrintTable([]models.Task{task})
-
-	oldTask, err := taskService.Get(current.Name, current.CreatedAt)
-	if err != nil {
-		if errors.Is(err, repositories.TaskNotFoundError) {
-			return nil
-		}
-		return err
-	}
-
-	fmt.Println("Task stopped:")
-	tui.PrintTable([]models.Task{oldTask})
 
 	return nil
 }

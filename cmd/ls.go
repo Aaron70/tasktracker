@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aaron70/task/models"
@@ -23,7 +24,7 @@ func newListTasksCommand(taskServices services.TaskService) *cobra.Command {
 			if all {
 				allTasks, err :=  taskServices.List()
 				if err != nil { return err }
-				tui.PrintTable(allTasks)
+				fmt.Println(tui.PrintTable(allTasks))
 				return nil
 			}
 
@@ -42,7 +43,7 @@ func newListTasksCommand(taskServices services.TaskService) *cobra.Command {
 				return err
 			}
 
-			tui.PrintTable(tasks)
+			fmt.Println(tui.PrintTable(tasks))
 			return nil
 		},
 	}

@@ -33,7 +33,7 @@ func newStopTaskCommand(taskService services.TaskService) *cobra.Command {
 			}
 
 			fmt.Println("Task stopped:")
-			tui.PrintTable([]models.Task{task})
+			fmt.Println(tui.PrintTable([]models.Task{task}))
 
 			return nil
 		},

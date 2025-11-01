@@ -28,6 +28,7 @@ type TaskService interface {
 	Stop(string, time.Time) error
 	SelectTask(models.Task) error
 	GetSelectedTask() (models.Task, error)
+	Switch(string, time.Time) (startedTask models.Task, stoppedTask models.Task, err error)
 }
 
 func validateTask(task *models.Task) error {
@@ -70,7 +71,6 @@ func (s taskService) Update(name string, date time.Time, task *models.Task) erro
 	if name != task.Name {
 		return fmt.Errorf("You can't change the name of the task: %s", name)
 	}
-
 
 	if task.CreatedAt.Format("02/01/2006") != date.Format("02/01/2006") {
 		return fmt.Errorf("You can't change the creation date of the task: %s", name)
@@ -150,25 +150,24 @@ func (s taskService) Find(filter FindTasksFilter) ([]models.Task, error) {
 
 	filteredTasks := make([]models.Task, 0, len(allTasks))
 	for _, task := range allTasks {
-		shouldSkip := true
+		dayFilter := true
+		statusFilter := true
 
 		if !filter.Day.IsZero() {
-			shouldSkip = task.StartedAt.Format("02/01/2006") != filter.Day.Format("02/01/2006")
+			dayFilter = task.StartedAt.Format("02/01/2006") == filter.Day.Format("02/01/2006")
 		}
 
 		if len(filter.Status) > 0 {
-			shouldSkip = !slices.Contains(filter.Status, string(task.Status)) && shouldSkip
+			statusFilter = slices.Contains(filter.Status, string(task.Status))
 		}
 
 		if len(filter.Tags) > 0 {
 			// TODO: Filter tasks by their tags
 		}
 
-		if shouldSkip {
-			continue
+		if dayFilter && statusFilter {
+			filteredTasks = append(filteredTasks, task)
 		}
-
-		filteredTasks = append(filteredTasks, task)
 	}
 
 	return filteredTasks, nil
@@ -182,3 +181,74 @@ func (s taskService) GetSelectedTask() (models.Task, error) {
 	return s.repository.GetSelectedTask()
 }
 
+func (s taskService) Switch(name string, date time.Time) (startedTask, stoppedTask models.Task, err error) {
+	err = s.Start(name, date)
+	if err != nil {
+		return models.Task{}, models.Task{}, err
+	}
+
+	startedTask, err = s.Get(name, date)
+	if err != nil {
+		return models.Task{}, models.Task{}, err
+	}
+
+	stoppedTask, err = s.GetSelectedTask()
+	if err != nil {
+		return startedTask, models.Task{}, err
+	}
+
+	err = s.SelectTask(startedTask)
+	if err != nil {
+		return startedTask, stoppedTask, err
+	}
+
+	if stoppedTask.Name != "" && stoppedTask.Name != startedTask.Name {
+		err = s.Stop(stoppedTask.Name, stoppedTask.CreatedAt)
+		if err != nil {
+			return startedTask, stoppedTask, err
+		}
+	}
+
+	return startedTask, stoppedTask, nil
+}
+
+// 	startedTask, err = s.GetSelectedTask()
+// 	if err != nil {
+// 		return models.Task{}, models.Task{}, err
+// 	}
+//
+// 	if startedTask.Name != "" {
+// 		err := s.Stop(startedTask.Name, startedTask.CreatedAt)
+// 		if err != nil {
+// 			return models.Task{}, models.Task{}, err
+// 		}
+// 	}
+//
+// 	if models.HashID(name, date) == models.HashID(startedTask.Name, startedTask.CreatedAt) {
+// 		return startedTask, models.Task{}, nil
+// 	}
+//
+// 	err = s.Start(name, date)
+// 	if err != nil {
+// 		return models.Task{}, models.Task{}, err
+// 	}
+//
+// 	task, err := s.Get(name, date)
+// 	if err != nil {
+// 		return models.Task{}, models.Task{}, err
+// 	}
+// 	err = s.SelectTask(task)
+// 	if err != nil {
+// 		return models.Task{}, models.Task{}, err
+// 	}
+//
+// 	stoppedTask, err = s.Get(startedTask.Name, startedTask.CreatedAt)
+// 	if err != nil {
+// 		if errors.Is(err, repositories.TaskNotFoundError) {
+// 			return models.Task{}, nil
+// 		}
+// 		return models.Task{}, models.Task{}, err
+// 	}
+//
+// 	return stoppedTask, nil
+// }

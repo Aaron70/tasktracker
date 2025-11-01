@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/aaron70/task/models"
 	"github.com/aaron70/task/services"
 	"github.com/aaron70/task/tui"
@@ -49,7 +51,7 @@ func newNewTaskCommand(taskService services.TaskService) *cobra.Command {
 				return err
 			}
 
-			tui.PrintTable([]models.Task{task})
+			fmt.Println(tui.PrintTable([]models.Task{task}))
 			return nil
 		},
 	}
